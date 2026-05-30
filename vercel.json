@@ -4,6 +4,10 @@
       "handle": "filesystem"
     },
     {
+      "src": "/api/(.*)",
+      "dest": "/api/[...path].js"
+    },
+    {
       "src": "/$",
       "dest": "/frontend/index.html"
     },
