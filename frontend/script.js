@@ -1,4 +1,9 @@
-const API_URL = "http://localhost:5000";
+const API_BASE = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "";
+const API_PREFIX = window.location.hostname === "localhost"
+  ? ""
+  : "/api";
 let lastQuestion = "";
 let lastAnswer = "";
 let currentUser = null;
@@ -86,8 +91,12 @@ function setUnauthenticated() {
   }
 }
 
+function buildApiUrl(path) {
+  return `${API_BASE}${API_PREFIX}${path}`;
+}
+
 async function fetchJson(path, payload) {
-  return fetch(`${API_URL}${path}`,
+  return fetch(buildApiUrl(path),
     {
       method: "POST",
       credentials: "include",
@@ -209,7 +218,7 @@ async function uploadPDF() {
   formData.append("pdf", file);
 
   const response = await fetch(
-    `${API_URL}/upload`,
+    buildApiUrl("/upload"),
     {
       method: "POST",
       credentials: "include",
@@ -352,7 +361,7 @@ function wireAuthTabs() {
 
 async function checkAuth() {
   try {
-    const response = await fetch(`${API_URL}/auth/me`, {
+    const response = await fetch(buildApiUrl("/auth/me"), {
       credentials: "include"
     });
 

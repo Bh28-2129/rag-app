@@ -16,11 +16,12 @@ const { OpenAI } = require("openai");
 
 const app = express();
 
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
+const isProduction = process.env.NODE_ENV === "production";
 
 app.use(
   cors({
-    origin: CLIENT_ORIGIN,
+    origin: CLIENT_ORIGIN || true,
     credentials: true
   })
 );
@@ -37,7 +38,7 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: isProduction,
       maxAge: 1000 * 60 * 60 * 24
     }
   })
@@ -412,15 +413,23 @@ app.post("/ask", requireAuth, async (req, res) => {
   }
 });
 
-initDb()
-  .then(() => {
-    app.listen(process.env.PORT, () => {
-      console.log(
-        `Server running on port ${process.env.PORT}`
-      );
+if (require.main === module) {
+  initDb()
+    .then(() => {
+      app.listen(process.env.PORT, () => {
+        console.log(
+          `Server running on port ${process.env.PORT}`
+        );
+      });
+    })
+    .catch((err) => {
+      console.error("Database init failed", err);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
+} else {
+  initDb().catch((err) => {
     console.error("Database init failed", err);
-    process.exit(1);
   });
+}
+
+module.exports = app;
