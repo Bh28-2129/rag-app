@@ -15,6 +15,7 @@ const { pool, initDb } = require("./db");
 const { OpenAI } = require("openai");
 
 const app = express();
+app.set("trust proxy", 1);
 
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
 const isProduction = process.env.NODE_ENV === "production";
