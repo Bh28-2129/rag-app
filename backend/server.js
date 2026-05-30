@@ -7,6 +7,8 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
 const PgSession = require("connect-pg-simple")(session);
+const path = require("path");
+const fs = require("fs");
 
 const upload = require("./upload");
 const { extractPDFText, chunkText } = require("./rag");
@@ -280,9 +282,20 @@ app.get("/auth/me", (req, res) => {
 
 app.post("/upload", requireAuth, upload.single("pdf"), async (req, res) => {
   try {
-    const pdfPath = req.file.path;
+    if (!req.file) {
+      return res.status(400).json({
+        error: "No file uploaded"
+      });
+    }
 
-    const text = await extractPDFText(pdfPath);
+    const tempDir = path.join("/tmp", "rag-app");
+    fs.mkdirSync(tempDir, { recursive: true });
+
+    const safeName = `${Date.now()}${path.extname(req.file.originalname)}`;
+    const pdfPath = path.join(tempDir, safeName);
+    fs.writeFileSync(pdfPath, req.file.buffer);
+
+    const text = await extractPDFText(req.file.buffer);
 
     const chunks = chunkText(text);
     storedChunksByUser.set(req.session.userId, chunks);
