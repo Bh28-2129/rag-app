@@ -280,7 +280,24 @@ app.get("/auth/me", (req, res) => {
   });
 });
 
-app.post("/upload", requireAuth, upload.single("pdf"), async (req, res) => {
+app.post("/upload", requireAuth, (req, res, next) => {
+  upload.single("pdf")(req, res, (err) => {
+    if (!err) {
+      return next();
+    }
+
+    if (err?.code === "LIMIT_FILE_SIZE") {
+      return res.status(413).json({
+        error: "File too large. Please upload a smaller PDF (max 4MB)."
+      });
+    }
+
+    return res.status(400).json({
+      error: "Upload failed",
+      details: err?.message || "Unknown upload error"
+    });
+  });
+}, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({

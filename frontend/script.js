@@ -213,6 +213,11 @@ async function uploadPDF() {
     return;
   }
 
+  if (file.size > 4 * 1024 * 1024) {
+    setStatus("File too large. Please upload a PDF under 4MB.", "warn");
+    return;
+  }
+
   const formData = new FormData();
 
   formData.append("pdf", file);
@@ -226,7 +231,14 @@ async function uploadPDF() {
     }
   );
 
-  const data = await response.json();
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (err) {
+    const rawText = await response.text();
+    setStatus(rawText || "Upload failed", "error");
+    return;
+  }
   if (response.status === 401) {
     setUnauthenticated();
     setAuthStatus("Please sign in to upload.", "warn");
@@ -417,7 +429,7 @@ async function login(event) {
 }
 
 async function logout() {
-  await fetch(`${API_URL}/auth/logout`, {
+  await fetch(buildApiUrl("/auth/logout"), {
     method: "POST",
     credentials: "include"
   });
